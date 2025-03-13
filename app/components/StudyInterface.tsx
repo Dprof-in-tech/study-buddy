@@ -179,7 +179,7 @@ export default function StudyInterface({ questions, resetApp } : {questions : an
       {showExplanation && (
         <div className="mb-6 p-4 bg-gray-50 rounded-md">
           <h3 className="font-semibold mb-2">Explanation:</h3>
-          <p>{currentQuestion.explanation}</p>
+          <p>{currentQuestion.correctAnswerFull}</p>
         </div>
       )}
       
