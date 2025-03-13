@@ -168,7 +168,7 @@ export default function StudyInterface({ questions, resetApp } : {questions : an
               }`}
             >
               <div className="flex items-start">
-                <span className="mr-2">{String.fromCharCode(65 + index)}.</span>
+                {/* <span className="mr-2">{String.fromCharCode(65 + index)}.</span> */}
                 <span>{option}</span>
               </div>
             </div>
