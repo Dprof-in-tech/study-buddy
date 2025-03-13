@@ -26,6 +26,7 @@ const preparePrompt = (text: any, numQuestions: any, difficulty: any) => {
     2. Have a clear, correct answer
     3. Follow typical Nigerian university examination patterns
     4. Include detailed marking scheme and solution as would be provided in a marking guide
+    5. ALWAYS include answer options regardless of question type
     
     For Nigerian engineering students, focus on:
     - Fundamental theory and definitions (Nigerian students are often tested on these)
@@ -34,20 +35,26 @@ const preparePrompt = (text: any, numQuestions: any, difficulty: any) => {
     - Mathematical derivations and proofs where appropriate
     - Questions that might appear in professional examinations like COREN
     
-    Structure questions in typical Nigerian exam format:
-    - For multiple choice: Four options (A,B,C,D) with one correct answer
-    - For calculations: Clear step-by-step working required
-    - For theory: Often requires definitions, explanations, and examples
-    - Allocate appropriate marks as would be done in a Nigerian exam (e.g., "10 marks")
-    
     Format each question as a JSON object with the following structure:
     {
       "question": "The question text with mark allocation e.g. (5 marks)",
       "questionType": "multiple-choice OR calculation OR theory",
-      "options": ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
-      "correctAnswer": "The correct answer with full working/explanation",
+      "options": [
+        "A) First option/answer",
+        "B) Second option/answer",
+        "C) Third option/answer",
+        "D) Fourth option/answer"
+      ],
+      "correctAnswer": "The letter of the correct option (e.g., 'A')",
+      "correctAnswerFull": "The full correct answer with working/explanation",
       "markingScheme": "Breakdown of how marks would be allocated in a Nigerian university"
     }
+    
+    IMPORTANT: For ALL question types (including calculations and theory):
+    - Always provide 4 possible answer options (A,B,C,D)
+    - For calculation questions, provide 4 different possible numerical answers
+    - For theory questions, provide 4 different possible explanations or definitions
+    - This allows students to test themselves in a multiple-choice format
     
     Return ONLY the JSON array of questions with no additional text.
     
