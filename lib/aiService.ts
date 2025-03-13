@@ -44,7 +44,7 @@ const preparePrompt = (text: any, numQuestions: any, difficulty: any) => {
     {
       "question": "The question text with mark allocation e.g. (5 marks)",
       "questionType": "multiple-choice OR calculation OR theory",
-      "options": ["A) Option A", "B) Option B", "C) Option C", "D) Option D"] (for multiple-choice only),
+      "options": ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
       "correctAnswer": "The correct answer with full working/explanation",
       "markingScheme": "Breakdown of how marks would be allocated in a Nigerian university"
     }
