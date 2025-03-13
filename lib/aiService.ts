@@ -40,10 +40,10 @@ const preparePrompt = (text: any, numQuestions: any, difficulty: any) => {
       "question": "The question text with mark allocation e.g. (5 marks)",
       "questionType": "multiple-choice OR calculation OR theory",
       "options": [
-        "A) First option/answer",
-        "B) Second option/answer",
-        "C) Third option/answer",
-        "D) Fourth option/answer"
+        "First option/answer",
+        "Second option/answer",
+        "Third option/answer",
+        "Fourth option/answer"
       ],
       "correctAnswer": "The letter of the correct option (e.g., 'A')",
       "correctAnswerFull": "The full correct answer with working/explanation",
