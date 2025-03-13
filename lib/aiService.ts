@@ -45,7 +45,7 @@ const preparePrompt = (text: any, numQuestions: any, difficulty: any) => {
         "Third option/answer",
         "Fourth option/answer"
       ],
-      "correctAnswer": "The letter of the correct option (e.g., 'A')",
+      "correctAnswer": "The correct option (full text)",
       "correctAnswerFull": "The full correct answer with working/explanation",
       "markingScheme": "Breakdown of how marks would be allocated in a Nigerian university"
     }
