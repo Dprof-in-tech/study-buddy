@@ -12,33 +12,41 @@ const preparePrompt = (text: any, numQuestions: any, difficulty: any) => {
     : text;
 
   const difficultyDescriptions: any = {
-    easy: 'basic understanding and recall of concepts',
-    medium: 'application of concepts and medium-level analysis',
-    hard: 'deep analysis, synthesis of concepts, and challenging applications'
+    easy: 'basic understanding and recall of concepts (suitable for continuous assessment tests)',
+    medium: 'application of concepts and analysis (suitable for mid-semester examinations)',
+    hard: 'deep analysis, synthesis of concepts, and challenging applications (suitable for final examinations)'
   };
 
   return `
-    You are an expert tutor for engineering students. Your task is to create ${numQuestions} study questions based on the following text.
+    You are an experienced Nigerian engineering lecturer with over 15 years of teaching experience in Nigerian universities. Your task is to create ${numQuestions} study questions based on the following text.
     These questions should be at a ${difficulty} difficulty level (${difficultyDescriptions[difficulty]}).
     
     Each question should:
     1. Be relevant to the material
     2. Have a clear, correct answer
-    3. Help students evaluate their understanding
-    4. Include answer explanations that cite relevant parts of the text
-
-    For engineering students, focus on:
-    - Fundamental concepts and principles
-    - Problem-solving approaches
-    - Practical applications
-    - Mathematical understanding where relevant
+    3. Follow typical Nigerian university examination patterns
+    4. Include detailed marking scheme and solution as would be provided in a marking guide
+    
+    For Nigerian engineering students, focus on:
+    - Fundamental theory and definitions (Nigerian students are often tested on these)
+    - Step-by-step problem-solving approaches (show all working)
+    - Local applications relevant to Nigerian engineering challenges
+    - Mathematical derivations and proofs where appropriate
+    - Questions that might appear in professional examinations like COREN
+    
+    Structure questions in typical Nigerian exam format:
+    - For multiple choice: Four options (A,B,C,D) with one correct answer
+    - For calculations: Clear step-by-step working required
+    - For theory: Often requires definitions, explanations, and examples
+    - Allocate appropriate marks as would be done in a Nigerian exam (e.g., "10 marks")
     
     Format each question as a JSON object with the following structure:
     {
-      "question": "The question text",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswer": "The correct option (full text)",
-      "explanation": "Detailed explanation of why this is correct"
+      "question": "The question text with mark allocation e.g. (5 marks)",
+      "questionType": "multiple-choice OR calculation OR theory",
+      "options": ["A) Option A", "B) Option B", "C) Option C", "D) Option D"] (for multiple-choice only),
+      "correctAnswer": "The correct answer with full working/explanation",
+      "markingScheme": "Breakdown of how marks would be allocated in a Nigerian university"
     }
     
     Return ONLY the JSON array of questions with no additional text.
@@ -78,7 +86,7 @@ export const generateWithOpenAI = async (text: any, numQuestions : any, difficul
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
-        { role: 'system', content: 'You are an expert tutor for engineering students.' },
+        { role: 'system', content: 'You are an experienced Nigerian engineering lecturer with over 15 years of teaching experience in Nigerian universities' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
@@ -126,7 +134,7 @@ export const generateWithClaude = async (text: any, numQuestions: any, difficult
         model: 'claude-3-5-sonnet-20240620',
         max_tokens: 2500,
         temperature: 0.7,
-        system: 'You are an expert tutor for engineering students who specializes in creating study questions.',
+        system: 'You are an expert Nigerian Lecturer for engineering students who specializes in creating study questions.',
         messages: [
           { role: 'user', content: prompt }
         ]
@@ -161,7 +169,7 @@ export const generateWithGrok = async (text : any, numQuestions : any, difficult
       'https://api.x.ai/v1/chat/completions', // replace with actual endpoint
       {
         messages: [
-          { role: 'system', content: 'You are an expert tutor for engineering students.' },
+          { role: 'system', content: 'You are an experienced Nigerian engineering lecturer with over 15 years of teaching experience in Nigerian universities' },
           { role: 'user', content: prompt }
         ],
         model: 'grok-2-latest',
