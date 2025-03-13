@@ -40,10 +40,10 @@ const preparePrompt = (text: any, numQuestions: any, difficulty: any) => {
       "question": "The question text with mark allocation e.g. (5 marks)",
       "questionType": "multiple-choice OR calculation OR theory",
       "options": [
-        "First option/answer",
-        "Second option/answer",
-        "Third option/answer",
-        "Fourth option/answer"
+        "A. First option/answer",
+        "B. Second option/answer",
+        "C. Third option/answer",
+        "D. Fourth option/answer"
       ],
       "correctAnswer": "The correct option (full text)",
       "correctAnswerFull": "The full correct answer with working/explanation",
@@ -51,7 +51,7 @@ const preparePrompt = (text: any, numQuestions: any, difficulty: any) => {
     }
     
     IMPORTANT: For ALL question types (including calculations and theory):
-    - Always provide 4 possible answer options (A,B,C,D)
+    - Always provide 4 possible answer options
     - For calculation questions, provide 4 different possible numerical answers
     - For theory questions, provide 4 different possible explanations or definitions
     - This allows students to test themselves in a multiple-choice format
