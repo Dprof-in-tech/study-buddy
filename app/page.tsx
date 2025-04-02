@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 
 // Dynamically import components with no SSR to avoid hydration issues
 const FileUpload = dynamic(() => import('../app/components/FileUpload'), { ssr: false });
@@ -107,6 +108,14 @@ export default function Home() {
         </div>
       )}
 
+
+      <div>
+        <Link href='/study'>
+        <button className='bg-black h-[52px] w-[445px] mx-auto text-white text-center rounded-md cursor-pointer my-8'>
+          Generate Study Notes
+        </button>
+        </Link>
+      </div>
       <footer className="mt-12 text-center text-sm text-gray-500">
         <p>Study Buddy - Client-side Engineering Study Tool</p>
         <p className="mt-1">Your data stays in your browser and is never sent to our servers.</p>
