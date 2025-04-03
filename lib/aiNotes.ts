@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import axios from 'axios';
+import { GoogleGenAI } from '@google/genai';
+//import axios from 'axios';
 
 // Helper function to prepare the prompt based on course outline
 const preparePrompt = (courseOutline: string) => {
@@ -216,55 +217,53 @@ const parseJsonResponse = (content: string) => {
  * @param courseOutline - Course outline text
  * @returns - Array of study note objects with formatted formulas
  */
+
 export const generateStudyNotes = async (courseOutline: string) => {
   try {
-    if (!process.env.NEXT_PUBLIC_GROK_API_KEY) {
+    if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
       console.warn('Using demo notes due to missing API key');
       return generateDemoNotes();
     }
 
+    const geminiai = new GoogleGenAI({
+      apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY
+    })
+
     const prompt = preparePrompt(courseOutline);
 
-    const response = await axios.post(
-      'https://api.x.ai/v1/chat/completions', 
-      {
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are an expert Nigerian engineering lecturer creating comprehensive study notes for university students.' 
-          },
-          { 
-            role: 'user', 
-            content: prompt 
+    const response = await geminiai.models.generateContent({
+      model: "gemini-2.5-pro-exp-03-25",
+        contents: [
+          {
+            parts: [
+              {
+                text: `You are an expert Nigerian engineering lecturer creating comprehensive study notes for university students. ${prompt}`
+              }
+            ]
           }
         ],
-        model: 'grok-2-latest',
-        temperature: 0.7,
-        max_tokens: 4000
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_GROK_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
       }
     );
 
     // Extract content from response
-    const content = response.data.choices[0].message?.content || '';
+    const content = response?.text || '';
 
     // Log raw content for debugging
-    console.log('Raw response content preview:', 
-      content.length > 200 ? content.substring(0, 200) + '...' : content);
+    console.log(
+      'Raw response content preview:',
+      content.length > 200 ? content.substring(0, 200) + '...' : content
+    );
 
     // Parsing with fallback
     try {
       // Use the enhanced parsing function that processes LaTeX formulas
       const parsedNotes = parseJsonResponse(content);
-      
+
       // Validate parsed notes
       if (Array.isArray(parsedNotes) && parsedNotes.length > 0) {
-        console.log(`Successfully parsed ${parsedNotes.length} study notes with formatted formulas`);
+        console.log(
+          `Successfully parsed ${parsedNotes.length} study notes with formatted formulas`
+        );
         return parsedNotes;
       }
     } catch (parseError) {
@@ -274,12 +273,77 @@ export const generateStudyNotes = async (courseOutline: string) => {
     // Fallback to demo notes
     console.warn('Falling back to demo notes due to parsing failure');
     return generateDemoNotes();
-
   } catch (error: any) {
-    console.error('Grok AI Study Notes Generation Error:', error);
+    console.error('Gemini AI Study Notes Generation Error:', error);
     return generateDemoNotes();
   }
 };
+
+
+// export const generateStudyNotes = async (courseOutline: string) => {
+//   try {
+//     if (!process.env.NEXT_PUBLIC_GROK_API_KEY) {
+//       console.warn('Using demo notes due to missing API key');
+//       return generateDemoNotes();
+//     }
+
+//     const prompt = preparePrompt(courseOutline);
+
+//     const response = await axios.post(
+//       'https://api.x.ai/v1/chat/completions', 
+//       {
+//         messages: [
+//           { 
+//             role: 'system', 
+//             content: 'You are an expert Nigerian engineering lecturer creating comprehensive study notes for university students.' 
+//           },
+//           { 
+//             role: 'user', 
+//             content: prompt 
+//           }
+//         ],
+//         model: 'grok-2-latest',
+//         temperature: 0.7,
+//         max_tokens: 4000
+//       },
+//       {
+//         headers: {
+//           'Authorization': `Bearer ${process.env.NEXT_PUBLIC_GROK_API_KEY}`,
+//           'Content-Type': 'application/json'
+//         }
+//       }
+//     );
+
+//     // Extract content from response
+//     const content = response.data.choices[0].message?.content || '';
+
+//     // Log raw content for debugging
+//     console.log('Raw response content preview:', 
+//       content.length > 200 ? content.substring(0, 200) + '...' : content);
+
+//     // Parsing with fallback
+//     try {
+//       // Use the enhanced parsing function that processes LaTeX formulas
+//       const parsedNotes = parseJsonResponse(content);
+      
+//       // Validate parsed notes
+//       if (Array.isArray(parsedNotes) && parsedNotes.length > 0) {
+//         console.log(`Successfully parsed ${parsedNotes.length} study notes with formatted formulas`);
+//         return parsedNotes;
+//       }
+//     } catch (parseError) {
+//       console.error('Parsing failed:', parseError);
+//     }
+
+//     // Fallback to demo notes
+//     console.warn('Falling back to demo notes due to parsing failure');
+//     return generateDemoNotes();
+
+//   } catch (error: any) {
+//     console.error('Grok AI Study Notes Generation Error:', error);
+//     return generateDemoNotes();
+//   }
+// };
 
 /**
  * Generate demo notes with pre-formatted LaTeX for testing

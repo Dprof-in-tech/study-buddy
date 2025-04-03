@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useRef } from "react";
 import { Send, Clipboard, FileText, Loader2, Download } from "lucide-react";
@@ -19,6 +20,73 @@ interface StudyNote {
   practicalApplications?: string[];
   potentialExamQuestions?: string[];
 }
+
+const StudyNoteCard = ({ note }: { note: StudyNote }) => {
+  return (
+    <div className="bg-gray-100 shadow-md rounded-md p-4 mb-4">
+      <h3 className="text-xl font-semibold text-blue-700 mb-2">{note.topic}</h3>
+      <p className="text-gray-700 leading-relaxed mb-4">Comprehensive study notes</p>
+      <div className="space-y-2">
+        <p className="text-gray-700 leading-relaxed">{note.content}</p>
+
+        {note.keyDefinitions && note.keyDefinitions.length > 0 && (
+          <div>
+            <h4 className="font-semibold text-blue-600">Key Definitions</h4>
+            <ul className="list-disc list-inside text-gray-700">
+              {note.keyDefinitions.map((def, i) => (
+                <li key={i}>{def}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {note.importantFormulas && note.importantFormulas.length > 0 && (
+          <div>
+            <h4 className="font-semibold text-blue-600">Important Formulas</h4>
+            {note.importantFormulas.map((formula, i) => {
+              return (
+                <div className="bg-white rounded-md p-3 mb-3" key={i}>
+                  <p className="font-medium">Formula: {formula.formula}</p>
+                  <p className="text-gray-700">{formula.explanation}</p>
+                  {formula.exampleCalculation && (
+                    <div className="mt-2 bg-gray-50 p-2 rounded-md">
+                      <p className="font-medium">Example Calculation:</p>
+                      <p className="whitespace-pre-wrap">
+                        Solution: {formula.exampleCalculation.solution}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {note.practicalApplications && note.practicalApplications.length > 0 && (
+          <div>
+            <h4 className="font-semibold text-blue-600">Practical Applications</h4>
+            <ul className="list-disc list-inside text-gray-700">
+              {note.practicalApplications.map((app, i) => (
+                <li key={i}>{app}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {note.potentialExamQuestions && note.potentialExamQuestions.length > 0 && (
+          <div>
+            <h4 className="font-semibold text-blue-600">Potential Exam Questions</h4>
+            <ul className="list-disc list-inside text-gray-700">
+              {note.potentialExamQuestions.map((q, i) => (
+                <li key={i}>{q}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const AIStudyBuddy: React.FC = () => {
   const [courseOutline, setCourseOutline] = useState<string>("");
@@ -59,79 +127,100 @@ const AIStudyBuddy: React.FC = () => {
       // Actual API call
       const notes = await generateStudyNotes(courseOutline);
       setStudyNotes(notes);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error generating study notes:", err);
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
       );
 
-      // Fallback to demo notes on error
+      // Fallback to demo notes on error.  Ensure demo notes match expected structure.
       const demoNotes = generateDemoNotes();
-      setStudyNotes(demoNotes);
+      setStudyNotes(Array.isArray(demoNotes) ? demoNotes : [demoNotes]);
+
     } finally {
       setIsLoading(false);
     }
   };
 
   const downloadStudyNotes = () => {
-    const notesContent = studyNotes
-      .map((note) => {
-        let content = `Topic: ${note.topic}\n\n${note.content}\n\n`;
+    if (!studyNotes || studyNotes.length === 0) return;
 
-        if (note.keyDefinitions && note.keyDefinitions.length) {
-          content +=
-            "Key Definitions:\n" +
-            note.keyDefinitions.map((def) => `- ${def}`).join("\n") +
-            "\n\n";
-        }
+    try {
+      // Handle the case where studyNotes is a single object
+      const notesContent = Array.isArray(studyNotes)
+        ? studyNotes
+          .map((note) => convertNoteToText(note))  // Map array of notes
+          .join("\n\n---\n\n") // Join notes with separator
+        : convertNoteToText(studyNotes); // Handle single note object
 
-        if (note.importantFormulas && note.importantFormulas.length) {
-          content +=
-            "Important Formulas:\n" +
-            note.importantFormulas
-              .map(
-                (formula) =>
-                  `Formula: ${formula.formula}\n` +
-                  `Explanation: ${formula.explanation}\n` +
-                  (formula.exampleCalculation
-                    ? `Example Calculation:\n  Problem: ${formula.exampleCalculation.problem}\n  Solution: ${formula.exampleCalculation.solution}\n`
-                    : "")
-              )
-              .join("\n\n") +
-            "\n\n";
-        }
+      const blob = new Blob([notesContent], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `study_notes_on_${studyNotes[0].topic}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
-        if (note.practicalApplications && note.practicalApplications.length) {
-          content +=
-            "Practical Applications:\n" +
-            note.practicalApplications.map((app) => `- ${app}`).join("\n") +
-            "\n\n";
-        }
+    } catch (e: any) {
+      setError(`Error downloading file: ${e.message}`);
+    }
+  };
 
-        if (note.potentialExamQuestions && note.potentialExamQuestions.length) {
-          content +=
-            "Potential Exam Questions:\n" +
-            note.potentialExamQuestions.map((q) => `- ${q}`).join("\n");
-        }
+  // Helper function to convert a single StudyNote object to text format
+  const convertNoteToText = (note: StudyNote): string => {
+    let content = `Topic: ${note.topic}\n\n${note.content}\n\n`;
 
-        return content;
-      })
-      .join("\n\n---\n\n");
+    if (note.keyDefinitions && note.keyDefinitions.length) {
+      content +=
+        "Key Definitions:\n" +
+        note.keyDefinitions.map((def) => `- ${def}`).join("\n") +
+        "\n\n";
+    }
 
-    const blob = new Blob([notesContent], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "comprehensive_study_notes.txt";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (note.importantFormulas && note.importantFormulas.length) {
+      content +=
+        "Important Formulas:\n" +
+        note.importantFormulas
+          .map(
+            (formula) =>
+              `Formula: ${formula.formula}\n` +
+              `Explanation: ${formula.explanation}\n` +
+              (formula.exampleCalculation
+                ? `Example Calculation:\n  Problem: ${formula.exampleCalculation.problem}\n  Solution: ${formula.exampleCalculation.solution}\n`
+                : "")
+          )
+          .join("\n\n") +
+        "\n\n";
+    }
+
+    if (note.practicalApplications && note.practicalApplications.length) {
+      content +=
+        "Practical Applications:\n" +
+        note.practicalApplications.map((app) => `- ${app}`).join("\n") +
+        "\n\n";
+    }
+
+    if (note.potentialExamQuestions && note.potentialExamQuestions.length) {
+      content +=
+        "Potential Exam Questions:\n" +
+        note.potentialExamQuestions.map((q) => `- ${q}`).join("\n");
+    }
+
+    return content;
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
-        <div className="bg-gradient-to-r from-black to-gray-800 px-4 py-3">
+        <div
+          className="px-4 py-3"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, black, #4a5568)",
+          }}
+        >
           <h1 className="text-3xl font-bold text-white flex items-center">
             <FileText className="mr-3" /> Engineering Study Buddy
           </h1>
@@ -154,7 +243,7 @@ const AIStudyBuddy: React.FC = () => {
               value={courseOutline}
               onChange={(e) => setCourseOutline(e.target.value)}
               placeholder="Paste your complete course outline here. Include all topics, subtopics, and any specific areas you want covered."
-              className="w-full min-h-[200px] p-4 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full min-h-[200px] p-4 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y"
             />
             <button
               onClick={handlePasteOutline}
@@ -168,7 +257,26 @@ const AIStudyBuddy: React.FC = () => {
             <button
               onClick={generateNotes}
               disabled={!courseOutline || isLoading}
-              className="flex items-center justify-center w-full bg-black text-white py-3 rounded-lg hover:bg-gray-600 disabled:opacity-50 transition"
+              className={
+                "w-full bg-black text-white py-3 rounded-lg hover:bg-gray-600 disabled:opacity-50 transition flex items-center justify-center"
+              }
+              style={{
+                backgroundColor: isLoading ? "#718096" : "black",
+                color: "white",
+                padding: "0.75rem 1rem",
+                borderRadius: "0.5rem",
+                fontWeight: "bold",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                ...(isLoading
+                  ? { opacity: 0.5, cursor: "not-allowed" }
+                  : {
+                    ":hover": { backgroundColor: "#4a5568" },
+                    transition: "background-color 0.3s ease",
+                  }),
+              }}
             >
               {isLoading ? (
                 <>
@@ -183,12 +291,19 @@ const AIStudyBuddy: React.FC = () => {
           </div>
 
           {error && (
-            <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+            <div
+              className="mt-4 px-4 py-3 rounded relative"
+              style={{
+                backgroundColor: "#fef2f2",
+                border: "1px solid #fecaca",
+                color: "#b91c1c",
+              }}
+            >
               {error}
             </div>
           )}
 
-          {/* {studyNotes.length > 0 && (
+          {studyNotes && studyNotes.length > 0 && (
             <div className="mt-8 text-black">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">
@@ -196,103 +311,27 @@ const AIStudyBuddy: React.FC = () => {
                 </h2>
                 <button
                   onClick={downloadStudyNotes}
-                  className="flex items-center bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                  className="bg-green-500 text-white hover:bg-green-600 flex items-center px-4 py-2 rounded-md"
+                  style={{
+                    backgroundColor: "#16a34a",
+                    color: "white",
+                    padding: "0.5rem 1rem",
+                    borderRadius: "0.375rem",
+                    // ":hover": { backgroundColor: "#15803d" },
+                    display: "flex",
+                    alignItems: "center",
+                  }}
                 >
                   <Download className="mr-2" /> Download Notes
                 </button>
               </div>
-
-              <div className="space-y-6">
-                <pre className="bg-gray-100 p-6 rounded-lg overflow-x-auto whitespace-pre-wrap break-words">
-                  {typeof studyNotes === "string"
-                    ? studyNotes
-                    : JSON.stringify(studyNotes, null, 2)}
-                </pre>
-              </div>
-            </div>
-          )} */}
-
-           {studyNotes.length > 0 && (
-            <div className="mt-8">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  Generated Study Notes
-                </h2>
-                <button
-                  onClick={downloadStudyNotes}
-                  className="flex items-center bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
-                >
-                  <Download className="mr-2" /> Download Notes
-                </button>
-              </div>
-
-              <div className="space-y-6 text-black">
-                {studyNotes.map((note, index) => (
-                  <div 
-                    key={index} 
-                    className="bg-gray-100 p-6 rounded-lg shadow-md"
-                  >
-                    <h3 className="text-xl font-semibold text-blue-700 mb-3">
-                      {note.topic}
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed mb-4">
-                      {note.content}
-                    </p>
-                    
-                    {note.keyDefinitions && note.keyDefinitions.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="font-semibold text-blue-600 mb-2">Key Definitions</h4>
-                        <ul className="list-disc list-inside text-gray-700">
-                          {note.keyDefinitions.map((def, i) => (
-                            <li key={i}>{def}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {note.importantFormulas && note.importantFormulas.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="font-semibold text-blue-600 mb-2">Important Formulas</h4>
-                        {note.importantFormulas.map((formula, i) => (
-                          <div key={i} className="mb-3 bg-white p-3 rounded-md">
-                            <p className="font-medium">Formula: {formula.formula}</p>
-                            <p className="text-gray-700">{formula.explanation}</p>
-                            {formula.exampleCalculation && (
-                              <div className="mt-2 bg-gray-50 p-2 rounded-md">
-                                <p className="font-medium">Example Calculation:</p>
-                                <p>Problem: {formula.exampleCalculation.problem}</p>
-                                <p className="whitespace-pre-wrap">Solution: {formula.exampleCalculation.solution}</p>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {note.practicalApplications && note.practicalApplications.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="font-semibold text-blue-600 mb-2">Practical Applications</h4>
-                        <ul className="list-disc list-inside text-gray-700">
-                          {note.practicalApplications.map((app, i) => (
-                            <li key={i}>{app}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {note.potentialExamQuestions && note.potentialExamQuestions.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold text-blue-600 mb-2">Potential Exam Questions</h4>
-                        <ul className="list-disc list-inside text-gray-700">
-                          {note.potentialExamQuestions.map((q, i) => (
-                            <li key={i}>{q}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              {Array.isArray(studyNotes) ? (
+                studyNotes.map((note, index) => (
+                  <StudyNoteCard key={index} note={note} />
+                ))
+              ) : (
+                <StudyNoteCard note={studyNotes} />
+              )}
             </div>
           )}
         </div>
