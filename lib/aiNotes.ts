@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
 
-
 // Helper function to prepare the prompt based on course outline
 const preparePrompt = (courseOutline: string) => {
   // Truncate text if too long
@@ -19,7 +18,7 @@ const preparePrompt = (courseOutline: string) => {
        - Detailed theoretical explanations
        - Practical applications relevant to Nigerian engineering context
        - Calculation examples with step-by-step solutions
-       - Key formulas and derivations
+       - Key formulas and derivations (formulas should be returned as human readable characters that do not require additional formatting not latex)
        - Potential exam-style insights
        - References to local engineering challenges and solutions
 
@@ -47,20 +46,115 @@ const preparePrompt = (courseOutline: string) => {
     - Practically oriented
     - Aligned with COREN (Council for the Regulation of Engineering in Nigeria) standards
     - Written in clear, accessible language for engineering students
+    - formulas should be returned as human readable characters that do not require additional formatting not latex
 
     Course Outline:
     ${truncatedOutline}
   `;
 };
 
-// Generate study notes using Grok
+/**
+ * Process LaTeX formulas to more readable text representations
+ * @param obj - Object or string containing LaTeX formulas
+ * @returns - Object or string with formatted formulas
+ */
+const processLatexFormulas = (obj: any): any => {
+  // If this is a string that might contain LaTeX
+  if (typeof obj === 'string') {
+    // Replace LaTeX expressions with more readable versions
+    let processed = obj;
+    
+    // Handle double backslashes from JSON escaping
+    processed = processed.replace(/\\\\/g, '\\');
+    
+    // Process fractions \frac{numerator}{denominator}
+    processed = processed.replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '($1)/($2)');
+    
+    // Process subscripts (_1 becomes ₁, etc.)
+    processed = processed.replace(/_1/g, '₁')
+                         .replace(/_2/g, '₂')
+                         .replace(/_3/g, '₃')
+                         .replace(/_4/g, '₄')
+                         .replace(/_5/g, '₅')
+                         .replace(/_6/g, '₆')
+                         .replace(/_7/g, '₇')
+                         .replace(/_8/g, '₈')
+                         .replace(/_9/g, '₉')
+                         .replace(/_0/g, '₀');
+    
+    // Process complex subscripts
+    processed = processed.replace(/_\{([^}]*)\}/g, '₍$1₎');
+    
+    // Process superscripts (^2 remains as is, ^{expression} becomes ^(expression))
+    processed = processed.replace(/\^\{([^}]*)\}/g, '^($1)');
+    
+    // Replace common Greek symbols
+    processed = processed.replace(/\\partial/g, '∂')
+                        .replace(/\\rho/g, 'ρ')
+                        .replace(/\\nu/g, 'ν')
+                        .replace(/\\Delta/g, 'Δ')
+                        .replace(/\\alpha/g, 'α')
+                        .replace(/\\beta/g, 'β')
+                        .replace(/\\gamma/g, 'γ')
+                        .replace(/\\omega/g, 'ω')
+                        .replace(/\\Omega/g, 'Ω')
+                        .replace(/\\theta/g, 'θ')
+                        .replace(/\\lambda/g, 'λ')
+                        .replace(/\\mu/g, 'μ')
+                        .replace(/\\sigma/g, 'σ')
+                        .replace(/\\tau/g, 'τ')
+                        .replace(/\\phi/g, 'φ')
+                        .replace(/\\pi/g, 'π');
+    
+    // Replace math operators and symbols
+    processed = processed.replace(/\\cdot/g, '·')
+                        .replace(/\\times/g, '×')
+                        .replace(/\\leq/g, '≤')
+                        .replace(/\\geq/g, '≥')
+                        .replace(/\\approx/g, '≈')
+                        .replace(/\\neq/g, '≠')
+                        .replace(/\\sqrt\{([^}]*)\}/g, '√($1)')
+                        .replace(/\\sum/g, '∑')
+                        .replace(/\\prod/g, '∏')
+                        .replace(/\\int/g, '∫')
+                        .replace(/\\infty/g, '∞');
+    
+    return processed;
+  } 
+  // If this is an array, process each element
+  else if (Array.isArray(obj)) {
+    return obj.map(item => processLatexFormulas(item));
+  } 
+  // If this is an object, process each property
+  else if (obj !== null && typeof obj === 'object') {
+    const result: { [key: string]: any } = {};
+    for (const key in obj) {
+      result[key] = processLatexFormulas(obj[key]);
+    }
+    return result;
+  }
+  // Return anything else as is
+  return obj;
+};
+
+/**
+ * Parse JSON response from AI model and process LaTeX formulas
+ * @param content - Raw content string from API response
+ * @returns - Array of parsed and processed JSON objects
+ */
 const parseJsonResponse = (content: string) => {
   try {
     // Remove everything before the first '{'
     const jsonStartIndex = content.indexOf('{');
+    if (jsonStartIndex === -1) {
+      throw new Error("No JSON object found in content");
+    }
     
     // Remove everything after the last '}'
     const jsonEndIndex = content.lastIndexOf('}') + 1;
+    if (jsonEndIndex <= jsonStartIndex) {
+      throw new Error("Invalid JSON structure in content");
+    }
 
     // Extract the JSON content
     const jsonContent = content.substring(jsonStartIndex, jsonEndIndex);
@@ -88,8 +182,13 @@ const parseJsonResponse = (content: string) => {
       const objectStr = jsonContent.substring(nextOpenBrace, endIndex);
       
       try {
+        // Parse the object first
         const parsedObject = JSON.parse(objectStr);
-        jsonObjects.push(parsedObject);
+        
+        // Process LaTeX formulas
+        const processedObject = processLatexFormulas(parsedObject);
+        
+        jsonObjects.push(processedObject);
       } catch (parseError) {
         console.error('Failed to parse individual object:', parseError);
       }
@@ -98,7 +197,12 @@ const parseJsonResponse = (content: string) => {
       startIndex = endIndex;
     }
 
-    // Return parsed objects
+    // Check if we found any valid objects
+    if (jsonObjects.length === 0) {
+      throw new Error("No valid JSON objects found");
+    }
+
+    // Return processed objects
     return jsonObjects;
 
   } catch (error: any) {
@@ -107,6 +211,11 @@ const parseJsonResponse = (content: string) => {
   }
 };
 
+/**
+ * Generate engineering study notes using Grok API
+ * @param courseOutline - Course outline text
+ * @returns - Array of study note objects with formatted formulas
+ */
 export const generateStudyNotes = async (courseOutline: string) => {
   try {
     if (!process.env.NEXT_PUBLIC_GROK_API_KEY) {
@@ -144,12 +253,18 @@ export const generateStudyNotes = async (courseOutline: string) => {
     // Extract content from response
     const content = response.data.choices[0].message?.content || '';
 
+    // Log raw content for debugging
+    console.log('Raw response content preview:', 
+      content.length > 200 ? content.substring(0, 200) + '...' : content);
+
     // Parsing with fallback
     try {
+      // Use the enhanced parsing function that processes LaTeX formulas
       const parsedNotes = parseJsonResponse(content);
       
       // Validate parsed notes
       if (Array.isArray(parsedNotes) && parsedNotes.length > 0) {
+        console.log(`Successfully parsed ${parsedNotes.length} study notes with formatted formulas`);
         return parsedNotes;
       }
     } catch (parseError) {
@@ -166,7 +281,10 @@ export const generateStudyNotes = async (courseOutline: string) => {
   }
 };
 
-// Fallback demo notes for testing
+/**
+ * Generate demo notes with pre-formatted LaTeX for testing
+ * @returns - Array with sample study note objects
+ */
 export const generateDemoNotes = () => {
   return [
     {
@@ -189,15 +307,31 @@ export const generateDemoNotes = () => {
               Q = 501,120 J or 501.12 kJ
             `
           }
+        },
+        {
+          formula: "(∂Q)/(∂t) = -k·A·(∂T)/(∂x)",
+          explanation: "Fourier's Law of Heat Conduction, where k is thermal conductivity, A is cross-sectional area",
+          exampleCalculation: {
+            problem: "Find the heat flow through a concrete wall with k = 0.8 W/m·K, area 20 m², thickness 0.25 m, with inside temp 22°C and outside temp 5°C",
+            solution: `
+              Q/t = -k·A·(T₂-T₁)/x
+              Q/t = -0.8 W/m·K × 20 m² × (5°C - 22°C)/0.25 m
+              Q/t = -0.8 × 20 × (-17)/0.25
+              Q/t = 0.8 × 20 × 17/0.25
+              Q/t = 1088 W
+            `
+          }
         }
       ],
       practicalApplications: [
         "Designing cooling systems for Nigerian industrial processes",
-        "Energy efficiency in thermal power plants"
+        "Energy efficiency in thermal power plants",
+        "Heat exchange in building materials for tropical climate adaptation"
       ],
       potentialExamQuestions: [
         "Explain the first law of thermodynamics with a practical example",
-        "Derive the heat transfer equation and solve a numerical problem"
+        "Derive the heat transfer equation and solve a numerical problem",
+        "How does Fourier's Law apply to building insulation in hot climates?"
       ]
     }
   ];
