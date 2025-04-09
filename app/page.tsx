@@ -109,9 +109,9 @@ export default function Home() {
       )}
 
 
-      <div>
+      <div className='w-fit h-fit mx-auto'>
         <Link href='/study'>
-        <button className='bg-black h-[52px] w-[445px] mx-auto text-white text-center rounded-md cursor-pointer my-8'>
+        <button className='bg-black h-[52px] w-[420px] mx-auto text-white text-center rounded-md cursor-pointer my-8'>
           Generate Study Notes
         </button>
         </Link>
