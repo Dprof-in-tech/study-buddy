@@ -97,6 +97,12 @@ export default function Home() {
         />
       )}
 
+<Link href='/study' className='flex items-center w-full'>
+        <button className='bg-black h-[52px] w-full md:w-[420px] lg:w-[450px] mx-auto text-white text-center rounded-md cursor-pointer my-8'>
+          Generate Study Notes
+        </button>
+        </Link>
+
       {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 text-black">
           <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -108,14 +114,6 @@ export default function Home() {
         </div>
       )}
 
-
-      <div className='w-fit h-fit mx-auto'>
-        <Link href='/study'>
-        <button className='bg-black h-[52px] w-[420px] mx-auto text-white text-center rounded-md cursor-pointer my-8'>
-          Generate Study Notes
-        </button>
-        </Link>
-      </div>
       <footer className="mt-12 text-center text-sm text-gray-500">
         <p>Study Buddy - Client-side Engineering Study Tool</p>
         <p className="mt-1">Your data stays in your browser and is never sent to our servers.</p>
