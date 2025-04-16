@@ -1,10 +1,10 @@
-# Study Buddy - AI-Powered Engineering Study Assistant
+# myStudy Buddy - AI-Powered Engineering Study Assistant
 
-Study Buddy is an AI-powered tool that helps engineering students test their knowledge by generating relevant practice questions from educational materials. Simply upload your notes, textbooks, or lecture materials (or paste text directly), and get custom multiple-choice questions to enhance your learning.
+myStudy Buddy is an AI-powered tool that helps engineering students test their knowledge by generating relevant practice questions from educational materials. Simply upload your notes, textbooks, or lecture materials (or paste text directly), and get custom multiple-choice questions to enhance your learning.
 
 **Try it now**: [https://engineeringstudy-buddy.vercel.app/](https://engineeringstudy-buddy.vercel.app/)
 
-![Study Buddy Screenshot](public/study-buddy.png)
+![myStudy Buddy Screenshot](public/study-buddy.png)
 
 ## Features
 
@@ -104,7 +104,7 @@ Edit the prompt template in `preparePrompt` function within `lib/aiService.ts` t
 
 ## Deployment
 
-The easiest way to deploy your Study Buddy app is using the Vercel Platform:
+The easiest way to deploy your myStudy Buddy app is using the Vercel Platform:
 
 1. Push your code to a GitHub repository
 2. Import the project in Vercel

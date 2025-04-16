@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Study Buddy - Engineering Study Tool',
+  title: 'myStudy Buddy - Engineering Study Tool',
   description: 'Generate study questions from your engineering materials and test your knowledge',
 };
 
@@ -29,16 +29,19 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white`}
       >
         {children}
-        <footer className="py-4 bg-white">
-          <div className="container mx-auto px-4">
+        <footer className="py-4 bg-black">
+          <div className="container mx-auto px-4 py-2">
             <p className="text-center text-sm">
-              <span style={{ color: '#000000' }}>Powered by: </span>
-              <span style={{ color: '#000000' }}>Grok by xAI, </span>
+              <span style={{ color: '#ffffff' }}>Powered by: </span>
+              <span style={{ color: '#ffffff' }}>Grok by xAI, </span>
               <span style={{ color: '#4285F4' }}>Gemini from Google, </span>
               <span style={{ color: '#10a37f' }}>ChatGPT by OpenAI, </span>
               <span style={{ color: '#f59e0b' }}>Claude by Anthropic</span>
             </p>
           </div>
+          <p className="text-base text-gray-400 text-center">
+              &copy; 2025 myStudy Buddy. All rights reserved.
+            </p>
         </footer>
       </body>
     </html>

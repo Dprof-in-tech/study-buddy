@@ -2,13 +2,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   generateWithOpenAI, 
   generateWithClaude, 
   generateWithGrok,
   generateDemoQuestions 
 } from '@/lib/aiService';
+import SubscriptionModal from './SubscriptionModal';
+import { AlertCircle } from 'lucide-react';
+import {canUseFeature, trackUsage } from '../../lib/subscription';
 
 export default function QuestionGenerator({ 
   text, 
@@ -28,6 +31,20 @@ export default function QuestionGenerator({
   const [error, setError] = useState('');
   const [preview, setPreview] = useState(text.length > 500 ? `${text.substring(0, 500)}...` : text);
   const [useDemo, setUseDemo] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [subscriptionNeeded, setSubscriptionNeeded] = useState(false);
+  const [usageLeft, setUsageLeft] = useState<number | null>(null);
+
+  // Check subscription status on component mount
+  useEffect(() => {
+    const checkAccess = async () => {
+      const accessStatus = await canUseFeature('questions');
+      setSubscriptionNeeded(!accessStatus.canUse);
+      setUsageLeft(accessStatus.usageLeft || null);
+    };
+    
+    checkAccess();
+  }, []);
 
   const handleGenerate = async () => {
     if (!text || text.trim() === '') {
@@ -35,10 +52,22 @@ export default function QuestionGenerator({
       return;
     }
 
+    // Check subscription again before proceeding
+    const accessStatus = await canUseFeature('questions');
+    if (!accessStatus.canUse) {
+      setSubscriptionNeeded(true);
+      setError(accessStatus.message || 'Subscription required');
+      return;
+    }
+
     if (useDemo) {
       // Use demo questions for testing without API
       const demoQuestions = generateDemoQuestions();
       localStorage.setItem('studyBuddyQuestions', JSON.stringify(demoQuestions));
+      
+      // Track usage
+      await trackUsage('questions');
+      
       onQuestionsGenerated(demoQuestions);
       return;
     }
@@ -66,6 +95,9 @@ export default function QuestionGenerator({
       // Store questions in local storage for persistence
       localStorage.setItem('studyBuddyQuestions', JSON.stringify(questions));
       
+      // Track usage
+      await trackUsage('questions');
+      
       onQuestionsGenerated(questions);
     } catch (err: any) {
       console.error('Question generation error:', err);
@@ -73,6 +105,13 @@ export default function QuestionGenerator({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSubscriptionSuccess = () => {
+    setShowSubscriptionModal(false);
+    setSubscriptionNeeded(false);
+    // After successful subscription, allow generation
+    handleGenerate();
   };
 
   return (
@@ -163,6 +202,31 @@ export default function QuestionGenerator({
         </div>
       </div>
       
+      {/* Subscription info/warning */}
+      {!subscriptionNeeded && usageLeft !== null && (
+        <div className="mb-4 p-3 bg-yellow-50 rounded-md">
+          <p className="text-sm text-yellow-800 flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            Free tier: You have {usageLeft} question set(s) remaining
+          </p>
+        </div>
+      )}
+      
+      {subscriptionNeeded && (
+        <div className="mb-4 p-3 bg-blue-50 rounded-md">
+          <p className="text-sm text-blue-800 font-medium">Subscription Required</p>
+          <p className="text-sm text-blue-700 mt-1">
+            You&apos;ve reached your free limit. Subscribe to generate unlimited question sets.
+          </p>
+          <button
+            onClick={() => setShowSubscriptionModal(true)}
+            className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+          >
+            Subscribe Now
+          </button>
+        </div>
+      )}
+      
       <div className="mb-4">
         <div className="p-3 bg-yellow-50 rounded-md">
           <div className="mt-2">
@@ -186,11 +250,24 @@ export default function QuestionGenerator({
       )}
       
       <button
-        onClick={handleGenerate}
-        className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        onClick={subscriptionNeeded ? () => setShowSubscriptionModal(true) : handleGenerate}
+        className={`w-full py-2 px-4 rounded-md ${
+          subscriptionNeeded
+            ? 'bg-blue-600 text-white hover:bg-blue-700' 
+            : 'bg-blue-600 text-white hover:bg-blue-700'
+        }`}
       >
-        Generate Questions
+        {subscriptionNeeded ? 'Subscribe to Generate Questions' : 'Generate Questions'}
       </button>
+      
+      {/* Subscription Modal */}
+      {showSubscriptionModal && (
+        <SubscriptionModal
+          plan="basic"
+          onClose={() => setShowSubscriptionModal(false)}
+          onSuccess={handleSubscriptionSuccess}
+        />
+      )}
     </div>
   );
 }

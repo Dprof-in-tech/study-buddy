@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState, useRef } from "react";
-import { Send, Clipboard, FileText, Loader2, Download } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Send, Clipboard, FileText, Loader2, Download, AlertCircle } from "lucide-react";
 import { generateStudyNotes, generateDemoNotes } from "../../lib/aiNotes";
+import { canUseFeature, trackUsage } from "@/lib/subscription";
+import SubscriptionModal from "../components/SubscriptionModal";
 
 // Updated interface to match the new generator
 interface StudyNote {
@@ -93,7 +95,21 @@ const AIStudyBuddy: React.FC = () => {
   const [studyNotes, setStudyNotes] = useState<StudyNote[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionNeeded, setSubscriptionNeeded] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [usageLeft, setUsageLeft] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Check subscription status on component mount
+  useEffect(() => {
+    const checkAccess = async () => {
+      const accessStatus = await canUseFeature('notes');
+      setSubscriptionNeeded(!accessStatus.canUse);
+      setUsageLeft(accessStatus.usageLeft || null);
+    };
+    
+    checkAccess();
+  }, []);
 
   const handlePasteOutline = () => {
     navigator.clipboard
@@ -111,6 +127,14 @@ const AIStudyBuddy: React.FC = () => {
   };
 
   const generateNotes = async () => {
+    // Check subscription again before proceeding
+    const accessStatus = await canUseFeature('notes');
+    if (!accessStatus.canUse) {
+      setSubscriptionNeeded(true);
+      setError(accessStatus.message || 'Subscription required');
+      return;
+    }
+
     // Clear previous state
     setStudyNotes([]);
     setError(null);
@@ -121,19 +145,25 @@ const AIStudyBuddy: React.FC = () => {
       if (!process.env.NEXT_PUBLIC_GROK_API_KEY) {
         const demoNotes = generateDemoNotes();
         setStudyNotes(demoNotes);
+        
+        // Track usage
+        await trackUsage('notes');
         return;
       }
 
       // Actual API call
       const notes = await generateStudyNotes(courseOutline);
       setStudyNotes(notes);
+      
+      // Track usage
+      await trackUsage('notes');
     } catch (err: any) {
       console.error("Error generating study notes:", err);
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
       );
 
-      // Fallback to demo notes on error.  Ensure demo notes match expected structure.
+      // Fallback to demo notes on error. Ensure demo notes match expected structure.
       const demoNotes = generateDemoNotes();
       setStudyNotes(Array.isArray(demoNotes) ? demoNotes : [demoNotes]);
 
@@ -211,6 +241,13 @@ const AIStudyBuddy: React.FC = () => {
     return content;
   };
 
+  const handleSubscriptionSuccess = () => {
+    setShowSubscriptionModal(false);
+    setSubscriptionNeeded(false);
+    // After successful subscription, allow generation
+    generateNotes();
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
@@ -230,6 +267,31 @@ const AIStudyBuddy: React.FC = () => {
         </div>
 
         <div className="p-6">
+          {/* Subscription info/warning */}
+          {!subscriptionNeeded && usageLeft !== null && (
+            <div className="mb-6 p-3 bg-yellow-50 rounded-md">
+              <p className="text-sm text-yellow-800 flex items-center">
+                <AlertCircle className="h-5 w-5 mr-2" />
+                Free tier: You have {usageLeft} study note generation(s) remaining
+              </p>
+            </div>
+          )}
+          
+          {subscriptionNeeded && (
+            <div className="mb-6 p-4 bg-blue-50 rounded-md">
+              <p className="text-md text-blue-800 font-medium">Subscription Required</p>
+              <p className="text-sm text-blue-700 mt-1">
+                You&apos;ve reached your free limit. Subscribe to generate unlimited study notes.
+              </p>
+              <button
+                onClick={() => setShowSubscriptionModal(true)}
+                className="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+              >
+                Subscribe Now
+              </button>
+            </div>
+          )}
+
           <div className="mb-6 relative">
             <label
               htmlFor="course-outline"
@@ -255,32 +317,23 @@ const AIStudyBuddy: React.FC = () => {
 
           <div className="flex space-x-4">
             <button
-              onClick={generateNotes}
+              onClick={subscriptionNeeded ? () => setShowSubscriptionModal(true) : generateNotes}
               disabled={!courseOutline || isLoading}
               className={
-                "w-full bg-black text-white py-3 rounded-lg hover:bg-gray-600 disabled:opacity-50 transition flex items-center justify-center"
+                "w-full py-3 rounded-lg flex items-center justify-center " + 
+                (isLoading ? "bg-gray-400 text-white cursor-not-allowed" : 
+                  subscriptionNeeded ? "bg-blue-600 text-white hover:bg-blue-700" : 
+                  !courseOutline ? "bg-gray-300 text-gray-500 cursor-not-allowed" : 
+                  "bg-black text-white hover:bg-gray-800")
               }
-              style={{
-                backgroundColor: isLoading ? "#718096" : "black",
-                color: "white",
-                padding: "0.75rem 1rem",
-                borderRadius: "0.5rem",
-                fontWeight: "bold",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "100%",
-                ...(isLoading
-                  ? { opacity: 0.5, cursor: "not-allowed" }
-                  : {
-                    ":hover": { backgroundColor: "#4a5568" },
-                    transition: "background-color 0.3s ease",
-                  }),
-              }}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 animate-spin" /> Generating Notes...
+                </>
+              ) : subscriptionNeeded ? (
+                <>
+                  <Send className="mr-2" /> Subscribe to Generate
                 </>
               ) : (
                 <>
@@ -317,7 +370,6 @@ const AIStudyBuddy: React.FC = () => {
                     color: "white",
                     padding: "0.5rem 1rem",
                     borderRadius: "0.375rem",
-                    // ":hover": { backgroundColor: "#15803d" },
                     display: "flex",
                     alignItems: "center",
                   }}
@@ -336,6 +388,15 @@ const AIStudyBuddy: React.FC = () => {
           )}
         </div>
       </div>
+      
+      {/* Subscription Modal */}
+      {showSubscriptionModal && (
+        <SubscriptionModal
+          plan="basic"
+          onClose={() => setShowSubscriptionModal(false)}
+          onSuccess={handleSubscriptionSuccess}
+        />
+      )}
     </div>
   );
 };
