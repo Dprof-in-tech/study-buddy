@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'myStudy Buddy - Engineering Study Tool',
+  title: 'myStudy Buddy - AI Powered Engineering Study Tool',
   description: 'Generate study questions from your engineering materials and test your knowledge',
 };
 
