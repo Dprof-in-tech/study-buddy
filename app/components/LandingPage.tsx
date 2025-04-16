@@ -53,7 +53,7 @@ export default function LandingPage() {
           <div className="flex items-center">
             <h1 className="text-2xl font-bold text-gray-900">myStudy Buddy</h1>
           </div>
-          <div className="flex space-x-4">
+          <div className="flex space-x-4 items-center">
             <Link href="/test" className="text-gray-700 hover:text-gray-900 font-medium">
               Try Demo
             </Link>
