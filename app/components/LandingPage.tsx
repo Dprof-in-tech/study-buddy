@@ -372,12 +372,12 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-gray-900">Chioma N.</h3>
-                  <p className="text-sm text-gray-500">Medical Student, UI</p>
+                  <h3 className="text-sm font-medium text-gray-900">Joy C.</h3>
+                  <p className="text-sm text-gray-500">400L Mech Eng, UNN</p>
                 </div>
               </div>
               <p className="text-gray-600 italic">
-                &quot;As a medical student, I love how the notes highlight key definitions and formulas just like my professors do. The practice questions really prepare me for both local exams and international assessments.&quot;
+              I&apos;m thoroughly impressed with this study tool! The intuitive design and comprehensive content have significantly boosted my understanding. Highly recommended for anyone seeking a reliable study resource.
               </p>
             </div>
             
