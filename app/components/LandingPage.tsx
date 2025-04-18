@@ -111,20 +111,20 @@ export default function LandingPage() {
                   {isSubscribed ? (
                     <Link
                       href="/study"
-                      className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-black hover:bg-green-700 focus:outline-none"
+                      className="cursor-pointer inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-black hover:bg-green-700 focus:outline-none"
                     >
                       Go to Study Notes
                     </Link>
                   ) : (
                     <Link href="/test">
-                      <button className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-black hover:bg-green-700 focus:outline-none">
+                      <button className="cursor-pointer inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-black hover:bg-green-700 focus:outline-none">
                         Try Free
                       </button>
                     </Link>
                   )}
                   <Link
                     href="/#features"
-                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none"
+                    className=" cursor-pointer inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none"
                   >
                     Learn more
                   </Link>
@@ -134,7 +134,7 @@ export default function LandingPage() {
                   Already purchased?{" "}
                   <Link
                     href="/verify"
-                    className="underline hover:text-gray-400"
+                    className="underline cursor-pointer hover:text-gray-400"
                   >
                     Verify your access code
                   </Link>
