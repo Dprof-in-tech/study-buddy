@@ -604,7 +604,7 @@ export default function LandingPage() {
               <div className="flex items-center mb-4">
                 <div className="flex-shrink-0">
                   <div className="inline-flex h-10 w-10 rounded-full bg-green-100 text-black items-center justify-center">
-                    <span className="font-medium text-lg">C</span>
+                    <span className="font-medium text-lg">I</span>
                   </div>
                 </div>
                 <div className="ml-3">
