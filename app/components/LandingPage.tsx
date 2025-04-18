@@ -51,7 +51,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm fixed top-0 z-20 w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <h1 className="text-2xl font-bold text-gray-900">myStudy Buddy</h1>
@@ -92,7 +92,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <div className="relative bg-white overflow-hidden">
+      <div className="relative bg-white overflow-hidden mt-[4rem]">
         <div className="max-w-7xl mx-auto">
           <div className="relative z-10 bg-white lg:max-w-2xl lg:w-full">
             <div className="pt-10 pb-16 sm:pt-16 sm:pb-20 lg:pt-20 lg:pb-28">

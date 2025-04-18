@@ -49,7 +49,7 @@ export default function Pricing({ onSubscribe, isSubscribed, usageStats }: Prici
         <div className="relative self-center bg-gray-100 rounded-lg p-0.5 flex">
           <button
             type="button"
-            className={`relative py-2 px-6 border-gray-200 rounded-md shadow-sm text-sm font-medium whitespace-nowrap ${
+            className={`relative py-2 px-6 border-gray-200 rounded-md shadow-sm text-sm font-medium whitespace-nowrap cursor-pointer ${
               billingPeriod === 'monthly'
                 ? 'bg-white border-transparent text-gray-900'
                 : 'bg-transparent border-transparent text-gray-500'
@@ -60,7 +60,7 @@ export default function Pricing({ onSubscribe, isSubscribed, usageStats }: Prici
           </button>
           <button
             type="button"
-            className={`ml-0.5 relative py-2 px-6 border-gray-200 rounded-md shadow-sm text-sm font-medium whitespace-nowrap ${
+            className={`ml-0.5 relative py-2 px-6 border-gray-200 rounded-md shadow-sm text-sm font-medium whitespace-nowrap cursor-pointer ${
               billingPeriod === 'yearly'
                 ? 'bg-white border-transparent text-gray-900'
                 : 'bg-transparent border-transparent text-gray-500'
