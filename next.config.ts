@@ -1,7 +1,22 @@
 import type { NextConfig } from "next";
+import withPWAInit from "next-pwa";
+
+// Initialize the PWA plugin
+const withPWA = withPWAInit({
+  dest: "public",
+  disable: process.env.NODE_ENV === "development",
+  register: true,
+  skipWaiting: true,
+  //Optional: Add offline fallback page
+  // fallbacks: {
+  //   document: '/offline',
+  // }
+});
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  /* your existing config options here */
+  reactStrictMode: true,
 };
 
-export default nextConfig;
+// Export the config with PWA functionality
+export default withPWA(nextConfig);
