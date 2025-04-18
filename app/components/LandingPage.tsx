@@ -350,16 +350,16 @@ export default function LandingPage() {
               <div className="flex items-center mb-4">
                 <div className="flex-shrink-0">
                   <div className="inline-flex h-10 w-10 rounded-full bg-green-100 text-black items-center justify-center">
-                    <span className="font-medium text-lg">A</span>
+                    <span className="font-medium text-lg">I</span>
                   </div>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-gray-900">Adebayo O.</h3>
-                  <p className="text-sm text-gray-500">Engineering Student, UNILAG</p>
+                  <h3 className="text-sm font-medium text-gray-900">Izuchukwu N.</h3>
+                  <p className="text-sm text-gray-500">400L Electrical Engineering, UNN</p>
                 </div>
               </div>
               <p className="text-gray-600 italic">
-                &quot;The notes format feels exactly like what my lecturers would hand out, but with clearer explanations. The exam questions actually helped me understand the &apos;why&apos; behind each concept.&quot;
+              I&apos;ve been using this study tool for a while, and it&apos;s been really helpful. It&apos;s easy to use and covers almost every aspect of any topic I search. Though note generation can be slow at times, it&apos;s great for exam preparation and understanding potential exam questions. Definitely a useful tool for anyone aiming to pass.
               </p>
             </div>
             
@@ -368,12 +368,12 @@ export default function LandingPage() {
               <div className="flex items-center mb-4">
                 <div className="flex-shrink-0">
                   <div className="inline-flex h-10 w-10 rounded-full bg-green-100 text-black items-center justify-center">
-                    <span className="font-medium text-lg">C</span>
+                    <span className="font-medium text-lg">J</span>
                   </div>
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-gray-900">Joy C.</h3>
-                  <p className="text-sm text-gray-500">400L Mech Eng, UNN</p>
+                  <p className="text-sm text-gray-500">400L Mechanical Engineering, UNN</p>
                 </div>
               </div>
               <p className="text-gray-600 italic">

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { CheckIcon } from 'lucide-react';
 
 interface PricingProps {
-  onSubscribe: (plan: 'basic' | 'pro') => void;
+  onSubscribe: (plan: 'basic' | 'pro', period: 'monthly' | 'yearly') => void;
   isSubscribed: boolean;
   usageStats: {
     notes: number;
@@ -19,6 +19,18 @@ export default function Pricing({ onSubscribe, isSubscribed, usageStats }: Prici
   const freeFeaturesLeft = {
     notes: Math.max(0, 2 - usageStats.notes),
     questions: Math.max(0, 1 - usageStats.questions)
+  };
+
+  // Price configuration
+  const pricing = {
+    basic: {
+      monthly: 1000,
+      yearly: 9600, // 1000 * 12 * 0.8 (20% discount)
+    },
+    pro: {
+      monthly: 2500,
+      yearly: 24000, // 2500 * 12 * 0.8 (20% discount)
+    }
   };
 
   return (
@@ -68,7 +80,7 @@ export default function Pricing({ onSubscribe, isSubscribed, usageStats }: Prici
             <p className="mt-4 text-sm text-gray-500">Try out the basic features with limited usage.</p>
             <p className="mt-8">
               <span className="text-4xl font-extrabold text-gray-900">₦0</span>
-              <span className="text-base font-medium text-gray-500">/mo</span>
+              <span className="text-base font-medium text-gray-500">/{billingPeriod === 'monthly' ? 'mo' : 'year'}</span>
             </p>
             <button
               disabled
@@ -106,12 +118,19 @@ export default function Pricing({ onSubscribe, isSubscribed, usageStats }: Prici
             <h2 className="text-lg leading-6 font-medium text-gray-900">Basic</h2>
             <p className="mt-4 text-sm text-gray-500">Everything you need for regular studying.</p>
             <p className="mt-8">
-              <span className="text-4xl font-extrabold text-gray-900">₦1,000</span>
-              <span className="text-base font-medium text-gray-500">/mo</span>
+              <span className="text-4xl font-extrabold text-gray-900">
+                ₦{billingPeriod === 'monthly' ? pricing.basic.monthly.toLocaleString() : pricing.basic.yearly.toLocaleString()}
+              </span>
+              <span className="text-base font-medium text-gray-500">/{billingPeriod === 'monthly' ? 'mo' : 'year'}</span>
             </p>
+            {billingPeriod === 'yearly' && (
+              <p className="mt-2 text-sm text-gray-600">
+                Save ₦{(pricing.basic.monthly * 12 - pricing.basic.yearly).toLocaleString()} per year
+              </p>
+            )}
             <button
-              onClick={() => onSubscribe('basic')}
-              className="mt-8 block w-full bg-blue-600 border border-transparent rounded-md py-2 text-sm font-semibold text-white text-center hover:bg-blue-700"
+              onClick={() => onSubscribe('basic', billingPeriod)}
+              className="cursor-pointer mt-8 block w-full bg-blue-600 border border-transparent rounded-md py-2 text-sm font-semibold text-white text-center hover:bg-blue-700"
             >
               {isSubscribed ? 'Manage Subscription' : 'Subscribe'}
             </button>
@@ -149,12 +168,19 @@ export default function Pricing({ onSubscribe, isSubscribed, usageStats }: Prici
             <h2 className="text-lg leading-6 font-medium text-gray-900">Pro</h2>
             <p className="mt-4 text-sm text-gray-500">Advanced features for serious students.</p>
             <p className="mt-8">
-              <span className="text-4xl font-extrabold text-gray-900">₦2,500</span>
-              <span className="text-base font-medium text-gray-500">/mo</span>
+              <span className="text-4xl font-extrabold text-gray-900">
+                ₦{billingPeriod === 'monthly' ? pricing.pro.monthly.toLocaleString() : pricing.pro.yearly.toLocaleString()}
+              </span>
+              <span className="text-base font-medium text-gray-500">/{billingPeriod === 'monthly' ? 'mo' : 'year'}</span>
             </p>
+            {billingPeriod === 'yearly' && (
+              <p className="mt-2 text-sm text-gray-600">
+                Save ₦{(pricing.pro.monthly * 12 - pricing.pro.yearly).toLocaleString()} per year
+              </p>
+            )}
             <button
-              onClick={() => onSubscribe('pro')}
-              className="mt-8 block w-full bg-blue-600 border border-transparent rounded-md py-2 text-sm font-semibold text-white text-center hover:bg-blue-700"
+              onClick={() => onSubscribe('pro', billingPeriod)}
+              className="cursor-pointer mt-8 block w-full bg-blue-600 border border-transparent rounded-md py-2 text-sm font-semibold text-white text-center hover:bg-blue-700"
             >
               {isSubscribed ? 'Upgrade Plan' : 'Subscribe'}
             </button>
