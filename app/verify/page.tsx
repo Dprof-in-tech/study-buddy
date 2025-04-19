@@ -103,7 +103,7 @@ export default function VerifyPage() {
                     name="access-code"
                     type="text"
                     required
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black sm:text-sm"
+                    className="appearance-none text-black block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black sm:text-sm"
                     placeholder="Enter your access code (e.g., ABCD-1234-EFGH)"
                     value={accessCode}
                     onChange={(e) => setAccessCode(e.target.value)}
@@ -143,7 +143,7 @@ export default function VerifyPage() {
                 <button
                   type="submit"
                   disabled={isVerifying || !accessCode.trim()}
-                  className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                  className={`group cursor-pointer relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
                     isVerifying || !accessCode.trim()
                       ? 'bg-gray-400 cursor-not-allowed'
                       : 'bg-black hover:bg-gray-800 focus:outline-none'

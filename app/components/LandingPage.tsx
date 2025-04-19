@@ -9,8 +9,10 @@ import AccessCodeVerification from "./AccessCodeVerification";
 import { checkSubscriptionStatus } from "@/lib/subscription";
 import Image from "next/image";
 import InstallPWA from "./installPWA";
+import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
+    const router = useRouter();
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"basic" | "pro" | null>(
     null
@@ -46,6 +48,7 @@ export default function LandingPage() {
   const handleAccessCodeSuccess = () => {
     setShowAccessCodeModal(false);
     setIsSubscribed(true);
+    router.push('/study');
   };
 
   return (
