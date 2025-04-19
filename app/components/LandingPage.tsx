@@ -59,19 +59,19 @@ export default function LandingPage() {
           <div className="flex space-x-4 items-center">
             <Link
               href="/test"
-              className="text-gray-700 hover:text-gray-900 font-medium hidden lg:flex"
+              className="text-gray-700 hover:text-gray-900 font-medium hidden lg:flex cursor-pointer"
             >
               Try Demo
             </Link>
             <Link
               href="#features"
-              className="text-gray-700 hover:text-gray-900 font-medium hidden lg:flex"
+              className="text-gray-700 hover:text-gray-900 font-medium hidden lg:flex cursor-pointer"
             >
               Features
             </Link>
             <Link
               href="#pricing"
-              className="text-gray-700 hover:text-gray-900 font-medium hidden lg:flex"
+              className="text-gray-700 hover:text-gray-900 font-medium hidden lg:flex cursor-pointer"
             >
               Pricing
             </Link>
@@ -82,7 +82,7 @@ export default function LandingPage() {
             ) : (
               <button
                 onClick={() => handleSubscribe("basic")}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none"
+                className="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none"
               >
                 Get Started
               </button>
@@ -643,7 +643,7 @@ export default function LandingPage() {
               <div className="inline-flex rounded-md shadow">
                 <Link
                   href="/study"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-black bg-white hover:bg-green-50"
+                  className="cursor-pointer inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-black bg-white hover:bg-green-50"
                 >
                   Go to Dashboard
                 </Link>
@@ -652,7 +652,7 @@ export default function LandingPage() {
               <div className="inline-flex rounded-md shadow">
                 <button
                   onClick={() => handleSubscribe("basic")}
-                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-black bg-white hover:bg-green-50"
+                  className="cursor-pointer inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-black bg-white hover:bg-green-50"
                 >
                   Get Started
                 </button>
