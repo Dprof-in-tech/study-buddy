@@ -3,42 +3,56 @@
 
 import { useState } from 'react';
 import mammoth from 'mammoth';
+import * as pdfjsLib from 'pdfjs-dist';
+import { createWorker } from 'tesseract.js';
+
+// Set up PDF.js worker to use local file
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+}
 
 export default function FileUpload({ onTextExtracted, setIsLoading } : {onTextExtracted : any, setIsLoading: any}) {
   const [file, setFile] :  any = useState(null);
   const [error, setError] = useState('');
   const [inputMethod, setInputMethod] = useState('file'); // 'file' or 'paste'
   const [pastedText, setPastedText] = useState('');
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingStatus, setProcessingStatus] = useState('');
 
   const handleFileChange = (e: any) => {
     const selectedFile = e.target.files[0];
-    
+
     if (!selectedFile) return;
-    
+
+    // Check file size (max 25MB)
+    const maxSize = 25 * 1024 * 1024; // 25MB
+    if (selectedFile.size > maxSize) {
+      setError('File too large. Maximum size is 25MB.');
+      setFile(null);
+      return;
+    }
+
     // Check file type
     const fileType = selectedFile.type;
     const fileName = selectedFile.name;
-    
-    if (fileName.toLowerCase().endsWith('.pdf')) {
-      setError('PDF files cannot be processed directly. Please copy and paste the text from your PDF into the "Paste Text" tab.');
-      setFile(null);
-      return;
-    }
-    
+
     const validTypes = [
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain'
+      'text/plain',
+      'application/pdf'
     ];
-    
-    if (!validTypes.includes(fileType) && 
-        !(fileName.endsWith('.docx') || fileName.endsWith('.txt'))) {
-      setError('Please upload a DOCX or TXT file. For PDFs, use the "Paste Text" option.');
+
+    if (!validTypes.includes(fileType) &&
+        !(fileName.endsWith('.docx') || fileName.endsWith('.txt') || fileName.endsWith('.pdf'))) {
+      setError('Please upload a DOCX, TXT, or PDF file.');
       setFile(null);
       return;
     }
-    
+
     setFile(selectedFile);
     setError('');
+    setProcessingProgress(0);
+    setProcessingStatus('');
   };
 
   const handlePastedTextChange = (e: any) => {
@@ -63,6 +77,106 @@ export default function FileUpload({ onTextExtracted, setIsLoading } : {onTextEx
     } catch (error) {
       console.error('TXT extraction error:', error);
       throw new Error('Failed to extract text from TXT');
+    }
+  };
+
+  const extractPdfText = async (pdfFile: any) => {
+    try {
+      setProcessingStatus('Loading PDF...');
+      setProcessingProgress(10);
+
+      const arrayBuffer = await pdfFile.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      let hasText = false;
+
+      setProcessingStatus('Extracting text from PDF...');
+      setProcessingProgress(30);
+
+      // First try: Extract text using PDF.js (for text-based PDFs)
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const content = await page.getTextContent();
+        const pageText = content.items.map((item: any) => item.str).join(' ').trim();
+
+        if (pageText.length > 10) { // Consider page has meaningful text if more than 10 chars
+          hasText = true;
+          fullText += pageText + '\n\n';
+        }
+
+        setProcessingProgress(30 + (pageNum / pdf.numPages) * 40);
+      }
+
+      // If we extracted meaningful text, return it
+      if (hasText && fullText.trim().length > 50) {
+        setProcessingStatus('Text extraction complete!');
+        setProcessingProgress(100);
+        return fullText.trim();
+      }
+
+      // Second try: OCR for scanned PDFs or PDFs with minimal text
+      setProcessingStatus('PDF appears to be scanned. Running OCR...');
+      setProcessingProgress(70);
+
+      return await extractPdfWithOCR(pdf);
+
+    } catch (error) {
+      console.error('PDF extraction error:', error);
+      throw new Error('Failed to extract text from PDF: ' + (error as Error).message);
+    }
+  };
+
+  const extractPdfWithOCR = async (pdf: any) => {
+    try {
+      const worker = await createWorker('eng');
+      let ocrText = '';
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        setProcessingStatus(`Running OCR on page ${pageNum} of ${pdf.numPages}...`);
+
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better OCR
+
+        // Create canvas to render page
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        if (!context) {
+          throw new Error('Could not get canvas context');
+        }
+
+        // Render page to canvas
+        await page.render({
+          canvasContext: context,
+          viewport: viewport
+        }).promise;
+
+        // Convert canvas to image data for OCR
+        const imageData = canvas.toDataURL('image/png');
+
+        // Run OCR on the image
+        const { data: { text } } = await worker.recognize(imageData);
+        ocrText += text + '\n\n';
+
+        setProcessingProgress(70 + (pageNum / pdf.numPages) * 25);
+      }
+
+      await worker.terminate();
+
+      setProcessingStatus('OCR complete!');
+      setProcessingProgress(100);
+
+      if (ocrText.trim().length < 50) {
+        throw new Error('Could not extract meaningful text from this PDF. Please try a different document or paste the text manually.');
+      }
+
+      return ocrText.trim();
+
+    } catch (error) {
+      console.error('OCR extraction error:', error);
+      throw new Error('OCR processing failed: ' + (error as Error).message);
     }
   };
 
@@ -96,6 +210,8 @@ export default function FileUpload({ onTextExtracted, setIsLoading } : {onTextEx
         extractedText = await extractDocxText(file);
       } else if (file.name.endsWith('.txt')) {
         extractedText = await extractTxtText(file);
+      } else if (file.name.endsWith('.pdf')) {
+        extractedText = await extractPdfText(file);
       } else {
         throw new Error('Unsupported file type');
       }
@@ -110,12 +226,12 @@ export default function FileUpload({ onTextExtracted, setIsLoading } : {onTextEx
       setError(err.message || 'Failed to process file');
     } finally {
       setIsLoading(false);
+      // Reset progress after a short delay to show completion
+      setTimeout(() => {
+        setProcessingProgress(0);
+        setProcessingStatus('');
+      }, 2000);
     }
-  };
-
-  const switchToPasteMode = () => {
-    setInputMethod('paste');
-    setError('');
   };
 
   return (
@@ -149,7 +265,7 @@ export default function FileUpload({ onTextExtracted, setIsLoading } : {onTextEx
         {inputMethod === 'file' ? (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select a file (DOCX or TXT)
+              Select a file (DOCX, TXT, or PDF)
             </label>
             <input
               type="file"
@@ -160,15 +276,15 @@ export default function FileUpload({ onTextExtracted, setIsLoading } : {onTextEx
                         file:text-sm file:font-semibold
                         file:bg-blue-50 file:text-blue-700
                         hover:file:bg-blue-100"
-              accept=".docx,.txt"
+              accept=".docx,.txt,.pdf"
             />
             {file && (
               <div className="mt-2 p-2 bg-gray-50 rounded">
                 <p className="text-sm">Selected: {file.name}</p>
               </div>
             )}
-            <div className="mt-2 p-2 bg-yellow-50 rounded text-xs text-amber-700">
-              <p><strong>Note:</strong> For PDF files, please use the &apos;Paste Text&apos; tab. Copy the text from your PDF and paste it in.</p>
+            <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
+              <p><strong>Enhanced PDF Processing:</strong> This tool can extract text from both regular PDFs and scanned documents using OCR technology. Processing may take longer for scanned documents.</p>
             </div>
           </div>
         ) : (
@@ -189,19 +305,25 @@ export default function FileUpload({ onTextExtracted, setIsLoading } : {onTextEx
         )}
       </div>
       
+      {/* Processing Progress */}
+      {processingProgress > 0 && (
+        <div className="mb-4 p-3 bg-blue-50 rounded">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-blue-700">{processingStatus}</span>
+            <span className="text-sm text-blue-600">{processingProgress}%</span>
+          </div>
+          <div className="w-full bg-blue-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${processingProgress}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="mb-4 p-2 bg-red-50 text-red-500 rounded">
           {error}
-          {error.includes('PDF') && inputMethod === 'file' && (
-            <div className="mt-2">
-              <button 
-                onClick={switchToPasteMode}
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Switch to Paste Mode
-              </button>
-            </div>
-          )}
         </div>
       )}
       
